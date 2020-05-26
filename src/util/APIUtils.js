@@ -49,11 +49,3 @@ export function signup(signupRequest) {
         body: JSON.stringify(signupRequest)
     });
 }
-
-export function upload(uploadRequest) {
-    return request({
-        url: API_BASE_URL + "/upload",
-        method: 'POST',
-        body: JSON.stringify(uploadRequest)
-    });
-}
