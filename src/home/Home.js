@@ -29,6 +29,11 @@ class Home extends Component {
             })
             .catch(err => { console.log('Something bad has happened:', err) })
     }
+
+    componentDidMount(){
+        this.listHandler()
+    }
+    
     
     render() {
         return (
@@ -52,7 +57,8 @@ class BootstrapUpload extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            selectedFile: null
+            selectedFile: null,
+            isLoading: false
         }
         console.log(props);
     }
@@ -60,7 +66,7 @@ class BootstrapUpload extends Component {
     onChangeHandler= event => {
         this.setState({
             selectedFile: event.target.files[0],
-            loaded: 0,
+            isLoading: true
             
         })
         this.props.listHandler()
@@ -70,13 +76,17 @@ class BootstrapUpload extends Component {
         const data = new FormData()
         data.append('file', this.state.selectedFile)
         data.append('email',this.props.currentUser.email)
+
         axios.post("http://localhost:8080/upload", data, { 
            // receive two    parameter endpoint url ,form data
        })
        .then(res => { // then print response status
         console.log(res.statusText)
+        })
+        this.setState({
+            isLoading: true
+        })
         this.props.listHandler()
-     })
     }
 
 
@@ -103,45 +113,28 @@ class ImageList extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            isLoading: true
         }
         console.log(props);
     }
 
     componentDidMount(){
+        this.setState({
+            isLoading: true
+        })
         this.props.listHandler()
     }
 
     render() {
         return (
             <div className="container">
-            <div className="row">
                 <div className="col-12 col-sm-8 col-lg-5">
-                <h6 className="text-muted">List Group with Images</h6>
-                <ul className="list-group">
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                    Don Quixote
-                    <div className="image-parent">
-                        <img src="https://s3.eu-central-1.amazonaws.com/bootstrapbaymisc/blog/24_days_bootstrap/don_quixote.jpg" className="img-fluid" alt="quixote"/>
-                    </div>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                    As I Lay Dying
-                    <div className="image-parent">
-                        <img src="https://s3.eu-central-1.amazonaws.com/bootstrapbaymisc/blog/24_days_bootstrap/as_I_lay.jpg" className="img-fluid" alt="lay"/>
-                    </div>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                    Things Fall Apart
-                    <div className="image-parent">
-                        <img src="https://s3.eu-central-1.amazonaws.com/bootstrapbaymisc/blog/24_days_bootstrap/things_fall_apart.jpg" className="img-fluid" alt="things"/>
-                    </div>
-                    </li>
-                </ul>
-                </div>
-                <div>
-                    {this.props.imageList.map((image, index) => (
+                <div className="container-fluid">
+                    <div className="row">
+                        {this.props.imageList.map((image, index) => (
                         <Image key={index} image={image} />
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
             </div>
@@ -159,10 +152,11 @@ class Image extends Component {
 
     render() {
         return (
-            <div className="image">
-              <h3>Image {this.props.key + 1}</h3>
-              <h2>{this.props.image.fileName}</h2>
-            </div>
+            <div className="col-md-3 col-sm-4 col-xs-6">
+                <a href={"https://picatta-images.s3.us-east-2.amazonaws.com/" + this.props.image.fileName}>
+                <img src={"https://picatta-images.s3.us-east-2.amazonaws.com/" + this.props.image.fileName} className="img-thumbnail" alt={this.props.image.origName}/>
+                </a>
+		    </div>
         );
     }
 }
