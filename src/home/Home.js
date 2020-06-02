@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './Home.css';
 import axios from 'axios';
+import LoadingIndicator from '../common/LoadingIndicator';
 
 class Home extends Component {
     constructor(props) {
@@ -11,28 +12,10 @@ class Home extends Component {
             isLoading: false,
         }
         this.imageList = []
-        this.listHandler = this.listHandler.bind(this)
         
     }
 
-    listHandler() {
-        this.setState({ isLoading: true });
-    
-        axios.get('http://localhost:8080/listImages', {
-            params: {
-                email: this.props.currentUser.email
-            }
-        })
-            .then(response => {
-                this.setState(prevState => ({ imageList: response.data, isLoading: false }));
-                this.imageList = response.data; 
-            })
-            .catch(err => { console.log('Something bad has happened:', err) })
-    }
 
-    componentDidMount(){
-        this.listHandler()
-    }
     
     
     render() {
@@ -40,10 +23,7 @@ class Home extends Component {
             <div className="home-container">
                 <div className="container">
                     <div>
-                        <ImageList currentUser={this.props.currentUser} imageList={this.imageList} listHandler={this.listHandler}/>
-                    </div>
-                    <div>
-                        <BootstrapUpload currentUser={this.props.currentUser} listHandler={this.listHandler}/>
+                        <BootstrapUpload currentUser={this.props.currentUser}/>
                     </div>
                 </div>
             </div>
@@ -58,18 +38,41 @@ class BootstrapUpload extends Component {
         super(props);
         this.state = {
             selectedFile: null,
-            isLoading: false
+            isLoading: false,
+            imageList: []
         }
-        console.log(props);
+        this.imageList = []
+        this.listHandler = this.listHandler.bind(this)
+    }
+
+    listHandler() {
+        this.setState({ isLoading: true });
+        console.log("about to make apiCall listImages");
+        axios.get('http://localhost:8080/listImages', {
+            params: {
+                email: this.props.currentUser.email
+            }
+        })
+            .then(response => {
+                this.imageList = response.data; 
+                this.setState({ imageList: response.data, isLoading: false });
+                console.log("completed apiCall listImages");
+            })
+            .catch(err => { console.log('Something bad has happened:', err) })
+    }
+
+    componentDidMount(){
+        this.listHandler();
+        console.log("completed list handler within componentWillMount");
+        console.log(this.state)
     }
 
     onChangeHandler= event => {
         this.setState({
             selectedFile: event.target.files[0],
             isLoading: true
-            
         })
-        this.props.listHandler()
+        this.listHandler()
     }
 
     onClickHandler = () => {
@@ -77,29 +80,38 @@ class BootstrapUpload extends Component {
         data.append('file', this.state.selectedFile)
         data.append('email',this.props.currentUser.email)
 
-        axios.post("http://localhost:8080/upload", data, { 
+        this.setState({
+            isLoading: true
+        }, () => {axios.post("http://localhost:8080/upload", data, { 
            // receive two    parameter endpoint url ,form data
        })
        .then(res => { // then print response status
-        console.log(res.statusText)
+        console.log(res.statusText);
+        this.listHandler();
+        console.log("completed list handler within onClickHandler");
         })
-        this.setState({
-            isLoading: true
-        })
-        this.props.listHandler()
+    })       
+        
     }
 
 
     render() {
+        const { data, isLoading } = this.state;
+
         return (
+            
             <div className="container">
                 <div className="row">
+                    <div>
+                        {isLoading ? <LoadingIndicator /> : <ImageList currentUser={this.props.currentUser} imageList={this.imageList} listHandler={this.listHandler}/>}
+                    </div>
                     <div className="col-md-6">
                         <div className="form-group files">
                             <label>Upload Your File </label>
                             <input type="file" className="form-control" multiple="" onChange={this.onChangeHandler}/>
                         </div>
                         <button type="button" className="btn btn-success btn-block" onClick={this.onClickHandler}>Upload</button>
+
                     </div>
                 </div>
             </div>
@@ -112,23 +124,12 @@ class BootstrapUpload extends Component {
 class ImageList extends Component {
     constructor(props) {
         super(props);
-        this.state = {
-            isLoading: true
-        }
         console.log(props);
-    }
-
-    componentDidMount(){
-        this.setState({
-            isLoading: true
-        })
-        this.props.listHandler()
     }
 
     render() {
         return (
             <div className="container">
-                <div className="col-12 col-sm-8 col-lg-5">
                 <div className="container-fluid">
                     <div className="row">
                         {this.props.imageList.map((image, index) => (
@@ -136,7 +137,6 @@ class ImageList extends Component {
                         ))}
                     </div>
                 </div>
-            </div>
             </div>
         );
     }
@@ -147,12 +147,11 @@ class Image extends Component {
         super(props);
         this.state = {
         }
-        console.log(props);
     }
 
     render() {
         return (
-            <div className="col-md-3 col-sm-4 col-xs-6">
+            <div className="col-md-4 col-sm-4 col-xs-4">
                 <a href={"https://picatta-images.s3.us-east-2.amazonaws.com/" + this.props.image.fileName}>
                 <img src={"https://picatta-images.s3.us-east-2.amazonaws.com/" + this.props.image.fileName} className="img-thumbnail" alt={this.props.image.origName}/>
                 </a>
