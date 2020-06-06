@@ -124,7 +124,12 @@ class BootstrapUpload extends Component {
 class ImageList extends Component {
     constructor(props) {
         super(props);
-        console.log(props);
+        this.state = {
+            isLoading: false,
+            imageList: this.props.imageList
+        }
+        console.log(this.props.listHandler + "is the imageList prop.listHandler");
+        this.listHandler = this.props.listHandler.bind(this)
     }
 
     render() {
@@ -132,8 +137,8 @@ class ImageList extends Component {
             <div className="container">
                 <div className="container-fluid">
                     <div className="row">
-                        {this.props.imageList.map((image, index) => (
-                        <Image key={index} image={image} currentUser={this.props.currentUser}/>
+                        {this.state.imageList.map((image, index) => (
+                        <Image key={index} image={image} currentUser={this.props.currentUser} listHandler={this.listHandler}/>
                         ))}
                     </div>
                 </div>
@@ -147,7 +152,6 @@ class Image extends Component {
         super(props);
         this.state = {
         }
-        this.listHandler = this.listHandler.bind(this)
     }
 
     clickDelete = () => {
@@ -159,30 +163,12 @@ class Image extends Component {
         }, () => {axios.delete("http://localhost:8080/deleteFile", {data: payload})
        .then(res => { // then print response status
         console.log(res.statusText);
-        this.listHandler();
+        this.props.listHandler();
         console.log("completed list handler within clickDelete");
         })
     })       
-        
+        //sadf
     }
-
-    listHandler() {
-        this.setState({ isLoading: true });
-        console.log("about to make apiCall listImages in Image class");
-        axios.get('http://localhost:8080/listImages', {
-            params: {
-                email: this.props.currentUser.email
-            }
-        })
-            .then(response => {
-                this.imageList = response.data; 
-                this.setState({ imageList: response.data, isLoading: false });
-                console.log("completed apiCall listImages in Image");
-            })
-            .catch(err => { console.log('Something bad has happened:', err) })
-    }
-
-
 
     render() {
         return (
