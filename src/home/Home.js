@@ -133,7 +133,7 @@ class ImageList extends Component {
                 <div className="container-fluid">
                     <div className="row">
                         {this.props.imageList.map((image, index) => (
-                        <Image key={index} image={image} />
+                        <Image key={index} image={image} currentUser={this.props.currentUser}/>
                         ))}
                     </div>
                 </div>
@@ -147,7 +147,42 @@ class Image extends Component {
         super(props);
         this.state = {
         }
+        this.listHandler = this.listHandler.bind(this)
     }
+
+    clickDelete = () => {
+        const payload = new FormData()
+        payload.append('fileName',this.props.image.fileName)
+        console.log("payload is " + payload);
+        this.setState({
+            isLoading: true
+        }, () => {axios.delete("http://localhost:8080/deleteFile", {data: payload})
+       .then(res => { // then print response status
+        console.log(res.statusText);
+        this.listHandler();
+        console.log("completed list handler within clickDelete");
+        })
+    })       
+        
+    }
+
+    listHandler() {
+        this.setState({ isLoading: true });
+        console.log("about to make apiCall listImages in Image class");
+        axios.get('http://localhost:8080/listImages', {
+            params: {
+                email: this.props.currentUser.email
+            }
+        })
+            .then(response => {
+                this.imageList = response.data; 
+                this.setState({ imageList: response.data, isLoading: false });
+                console.log("completed apiCall listImages in Image");
+            })
+            .catch(err => { console.log('Something bad has happened:', err) })
+    }
+
+
 
     render() {
         return (
@@ -155,6 +190,7 @@ class Image extends Component {
                 <a href={"https://picatta-images.s3.us-east-2.amazonaws.com/" + this.props.image.fileName}>
                 <img src={"https://picatta-images.s3.us-east-2.amazonaws.com/" + this.props.image.fileName} className="img-thumbnail" alt={this.props.image.origName}/>
                 </a>
+                <button type="button" className="btn btn-danger btn-block" onClick={this.clickDelete}>Delete</button>
 		    </div>
         );
     }
